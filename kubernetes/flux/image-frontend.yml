@@ -1,0 +1,55 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: frontend
+  namespace: flux-system
+spec:
+  image: demo.goharbor.io/luftschmaus/luftschmaus-frontend
+  interval: 1m
+  secretRef:
+    name: harbor-credentials
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: frontend-dev
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: frontend
+  filterTags:
+    pattern: "^(?P<num>\\d+)-[a-f0-9]+$"
+    extract: "$num"
+  policy:
+    numerical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: frontend-staging
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: frontend
+  filterTags:
+    pattern: "^(?P<num>\\d+)-[a-f0-9]+$"
+    extract: "$num"
+  policy:
+    numerical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: frontend-production
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: frontend
+  filterTags:
+    pattern: "^(?P<num>\\d+)-[a-f0-9]+$"
+    extract: "$num"
+  policy:
+    numerical:
+      order: asc

@@ -1,0 +1,79 @@
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:14-rootless
+    ports:
+      - "3000:3000"
+      - "2222:2222"
+    volumes:
+      - forgejo_data:/var/lib/gitea
+      - forgejo_config:/etc/gitea
+    environment:
+      FORGEJO__server__ROOT_URL: http://localhost:3000
+      FORGEJO__server__SSH_PORT: "2222"
+      FORGEJO__server__DOMAIN: localhost
+      FORGEJO__server__LFS_START_SERVER: "true"
+      FORGEJO__service__DISABLE_REGISTRATION: "false"
+      FORGEJO__security__INSTALL_LOCK: "true"
+      FORGEJO__database__DB_TYPE: sqlite3
+      FORGEJO__webhook__ALLOWED_HOST_LIST: "*"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/v1/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    extra_hosts:
+      - "localhost:host-gateway"
+    networks:
+      - luftschmaus
+    restart: unless-stopped
+
+  woodpecker:
+    image: woodpeckerci/woodpecker-server:v3.13.0
+    user: root
+    ports:
+      - "8000:8000"
+    volumes:
+      - woodpecker_data:/data
+    environment:
+      WOODPECKER_OPEN: "true"
+      WOODPECKER_HOST: http://localhost:8000
+      WOODPECKER_FORGEJO: "true"
+      WOODPECKER_FORGEJO_URL: http://localhost:3000
+      WOODPECKER_FORGEJO_CLIENT: ${WOODPECKER_FORGEJO_CLIENT}
+      WOODPECKER_FORGEJO_SECRET: ${WOODPECKER_FORGEJO_SECRET}
+      WOODPECKER_ADMIN: luftschmaus
+      WOODPECKER_DATABASE_DRIVER: sqlite3
+      WOODPECKER_DATABASE_DATASOURCE: /data/woodpecker.sqlite
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET}
+      WOODPECKER_PLUGINS_PRIVILEGED: "plugins/docker"
+    extra_hosts:
+      - "localhost:host-gateway"
+    depends_on:
+      - forgejo
+    networks:
+      - luftschmaus
+    restart: unless-stopped
+
+  woodpecker-agent:
+    image: woodpeckerci/woodpecker-agent:v3.13.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WOODPECKER_SERVER: woodpecker:9000
+      WOODPECKER_AGENT_SECRET: ${WOODPECKER_AGENT_SECRET}
+      WOODPECKER_AGENT_TOKEN: ${WOODPECKER_AGENT_TOKEN:-}
+      WOODPECKER_BACKEND_DOCKER_NETWORK: dlbsepdocd_luftschmaus
+    depends_on:
+      - woodpecker
+    networks:
+      - luftschmaus
+    restart: unless-stopped
+
+networks:
+  luftschmaus:
+
+volumes:
+  forgejo_data:
+  forgejo_config:
+  woodpecker_data:

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: forgejo-creds
+  namespace: flux-system
+type: Opaque
+stringData:
+  username: FORGEJO_USERNAME
+  password: FORGEJO_PASSWORD
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: luftschmaus-webapp-dev
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: http://COLIMA_IP:3000/luftschmaus/luftschmaus-webapp
+  ref:
+    branch: develop
+  secretRef:
+    name: forgejo-creds
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: luftschmaus-webapp-main
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: http://COLIMA_IP:3000/luftschmaus/luftschmaus-webapp
+  ref:
+    branch: main
+  secretRef:
+    name: forgejo-creds

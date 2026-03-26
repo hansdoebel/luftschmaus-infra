@@ -1,0 +1,49 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: luftschmaus-dev
+  namespace: flux-system
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: luftschmaus-webapp-dev
+  git:
+    checkout:
+      ref:
+        branch: develop
+    commit:
+      author:
+        email: flux@luftschmaus.local
+        name: Flux
+      messageTemplate: "[ci skip] update dev images {{range .Changed.Changes}}{{.OldValue}} -> {{.NewValue}} {{end}}"
+    push:
+      branch: develop
+  update:
+    path: ./kubernetes/overlays/development
+    strategy: Setters
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: luftschmaus-staging
+  namespace: flux-system
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: luftschmaus-webapp-main
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        email: flux@luftschmaus.local
+        name: Flux
+      messageTemplate: "[ci skip] update staging images {{range .Changed.Changes}}{{.OldValue}} -> {{.NewValue}} {{end}}"
+    push:
+      branch: main
+  update:
+    path: ./kubernetes/overlays/staging
+    strategy: Setters

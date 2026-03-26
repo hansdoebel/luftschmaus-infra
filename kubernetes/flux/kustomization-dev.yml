@@ -1,0 +1,21 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: luftschmaus-dev
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./kubernetes/overlays/development
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: luftschmaus-webapp-dev
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: frontend
+      namespace: luftschmaus-dev
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: backend
+      namespace: luftschmaus-dev
